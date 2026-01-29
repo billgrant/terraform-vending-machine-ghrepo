@@ -1,5 +1,5 @@
 resource "github_repository" "development" {
-  name        = "${var.service_name}-dev-${random_integer.suffix.result}"
+  name        = "${var.service_name}-dev"
   description = "Development repository for ${var.service_name}"
   visibility  = "public"
   template {
@@ -9,13 +9,8 @@ resource "github_repository" "development" {
   }
 }
 
-# resource "github_branch" "cli" {
-#   repository = github_repository.development.name
-#   branch     = "cli"
-# }
-
 resource "github_repository" "production" {
-  name        = "${var.service_name}-prod-${random_integer.suffix.result}"
+  name        = "${var.service_name}-prod"
   description = "Production repository for ${var.service_name}"
   visibility  = "public"
   template {
