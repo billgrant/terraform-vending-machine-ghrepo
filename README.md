@@ -4,23 +4,23 @@ A reusable Terraform module for HCP Terraform (No-Code) that automatically provi
 
 ## Overview
 
-This module is designed as a **No-Code module for HCP Terraform**, enabling teams to provision GitHub repositories through the HCP Terraform UI without writing any Terraform code. It creates two public GitHub repositories (development and production) for a given service, automatically bootstrapping them from a template repository. Each repository name includes a random suffix to ensure uniqueness across GitHub.
+This module is designed as a **No-Code module for HCP Terraform**, enabling teams to provision GitHub repositories through the HCP Terraform UI without writing any Terraform code. It creates two public GitHub repositories (development and production) for a given service, automatically bootstrapping them from a template repository. The module also configures GitHub Actions secrets for HCP Terraform integration.
 
 ## Features
 
 - **No-Code Provisioning**: Use HCP Terraform UI to provision repositories without writing Terraform
 - **Automated Repository Creation**: Provisions both dev and prod repositories in a single workspace run
 - **Template-Based**: Clones all branches from a specified template repository
-- **Unique Names**: Automatically appends a random suffix to avoid name collisions
 - **Public Repositories**: Both repositories are created as public by default
-- **Consistent Naming**: Uses a predictable naming pattern: `{service-name}-{env}-{suffix}`
+- **Consistent Naming**: Uses a predictable naming pattern: `{service-name}-{env}`
+- **GitHub Actions Integration**: Automatically configures TFC_TOKEN secret for HCP Terraform workflows
+- **Workflow Automation**: Triggers update-readme.yml workflow after repository creation
 - **HCP Terraform Native**: Designed for integration with HCP Terraform's module registry
 
 ## Requirements
 
 - Terraform >= 1.0
 - GitHub provider ~> 6.10.0
-- Random provider ~> 3.8.1
 
 ## Usage
 
@@ -41,7 +41,7 @@ This module is designed as a **No-Code module for HCP Terraform**, enabling team
    - `service_name`: Name of your service (e.g., "api-gateway")
    - `gh_owner`: GitHub organization name
    - `gh_template_repository`: Template repo name to clone from
-   - `gh_token`: GitHub personal access token (set as sensitive variable)
+   - `tfc_token`: HCP Terraform API token for GitHub Actions integration (set as sensitive variable)
 
 4. **Apply**:
    - Click **Create and apply** in the UI
@@ -56,10 +56,10 @@ module "github_repos" {
   source  = "app.terraform.io/YOUR-ORG/github-repo-vending-machine/github"
   version = "~> 1.0"
 
-  service_name          = "my-service"
-  gh_owner             = "my-github-org"
+  service_name           = "my-service"
+  gh_owner               = "my-github-org"
   gh_template_repository = "my-template-repo"
-  gh_token             = var.github_token
+  tfc_token              = var.tfc_token
 }
 ```
 
@@ -68,13 +68,13 @@ module "github_repos" {
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | `service_name` | The name of the service being deployed | `string` | | yes |
-| `gh_owner` | GitHub owner (user or organization) for the template repository | `string` | `""` | no |
-| `gh_template_repository` | GitHub template repository to use for the new repositories | `string` | | yes |
-| `gh_token` | GitHub API token for authentication | `string` | `""` | no |
+| `gh_owner` | GitHub owner (user or organization) for the repository | `string` | `""` | no |
+| `gh_template_repository` | GitHub template repository to use for the new repository | `string` | | yes |
+| `tfc_token` | HCP Terraform API token for GitHub Actions integration | `string` | | yes |
 
 ### Required Environment Variables
 
-If `gh_token` is not provided as a variable, ensure the `GITHUB_TOKEN` environment variable is set:
+The `GITHUB_TOKEN` environment variable must be set for GitHub provider authentication:
 
 ```bash
 export GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxx"
@@ -90,23 +90,25 @@ export GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxx"
 ## Example Outputs
 
 ```
-development_repository = "https://github.com/my-org/my-service-dev-142"
-production_repository = "https://github.com/my-org/my-service-prod-142"
+development_repository = "https://github.com/my-org/my-service-dev"
+production_repository = "https://github.com/my-org/my-service-prod"
 ```
 
 ## How It Works
 
-1. **Random Suffix Generation**: A random integer between 100-199 is generated to ensure repository name uniqueness
-2. **Development Repository**: Created with name pattern `{service_name}-dev-{suffix}` from the template
-3. **Production Repository**: Created with name pattern `{service_name}-prod-{suffix}` from the template
-4. **Template Cloning**: All branches from the template repository are included in the new repositories
+1. **Development Repository**: Created with name pattern `{service_name}-dev` from the template
+2. **Production Repository**: Created with name pattern `{service_name}-prod` from the template
+3. **Template Cloning**: All branches from the template repository are included in the new repositories
+4. **GitHub Actions Secrets**: TFC_TOKEN secret is automatically configured in both repositories
+5. **Workflow Trigger**: The update-readme.yml workflow is triggered in both repositories after creation
 
 ## Prerequisites
 
 1. **HCP Terraform Account**: Organization with appropriate permissions
-2. **GitHub Personal Access Token**: With `repo` and `admin:repo_hook` scopes
-3. **Existing Template Repository**: A GitHub repository to clone from
-4. **GitHub App or Token**: Configured with HCP Terraform for VCS integration (optional, for automatic runs)
+2. **GitHub Personal Access Token**: With `repo` and `admin:repo_hook` scopes (set as GITHUB_TOKEN environment variable)
+3. **HCP Terraform API Token**: For GitHub Actions integration (set as tfc_token variable)
+4. **Existing Template Repository**: A GitHub repository to clone from with update-readme.yml workflow
+5. **GitHub App or Token**: Configured with HCP Terraform for VCS integration (optional, for automatic runs)
 
 ## Example
 
@@ -118,22 +120,22 @@ production_repository = "https://github.com/my-org/my-service-prod-142"
    - **service_name**: `api-gateway`
    - **gh_owner**: `my-organization`
    - **gh_template_repository**: `service-template`
-   - **gh_token**: `ghp_1234567890abcdefghijklmnopqrstuvwxyz` (marked as sensitive)
+   - **tfc_token**: `your-hcp-terraform-api-token` (marked as sensitive)
 4. Click **Create and apply**
 
 This will create:
-- `api-gateway-dev-{random}` - Development repository
-- `api-gateway-prod-{random}` - Production repository
+- `api-gateway-dev` - Development repository
+- `api-gateway-prod` - Production repository
 
-Both repositories are initialized with all branches from `my-organization/service-template`.
+Both repositories are initialized with all branches from `my-organization/service-template` and configured with TFC_TOKEN secret.
 
 ### Output
 
 After the run completes successfully:
-- **development_repository**: `https://github.com/my-org/api-gateway-dev-142`
-- **production_repository**: `https://github.com/my-org/api-gateway-prod-142`
+- **development_repository**: `https://github.com/my-org/api-gateway-dev`
+- **production_repository**: `https://github.com/my-org/api-gateway-prod`
 
-Copy these URLs to access your new repositories.
+Copy these URLs to access your new repositories. Both repositories will have the TFC_TOKEN secret configured and the update-readme.yml workflow will be triggered automatically.
 
 ## Cleanup
 
@@ -152,10 +154,13 @@ terraform destroy
 ## Notes
 
 - **No Terraform Code Required**: Team members provision repositories using the HCP Terraform UI
-- Repository names are generated with a random suffix (100-199) to avoid naming conflicts
+- Repository names follow the pattern `{service_name}-dev` and `{service_name}-prod`
 - Both repositories are created as **public** by default
 - The template repository's all branches are included in the new repositories
-- **Sensitive Variables**: GitHub token must be marked as sensitive in the workspace
+- **Sensitive Variables**: TFC token must be marked as sensitive in the workspace
+- **GitHub Actions Integration**: TFC_TOKEN secret is automatically configured for workflow integration
+- **Workflow Automation**: The update-readme.yml workflow is triggered after repository creation
+- **Environment Variables**: GITHUB_TOKEN must be set for provider authentication
 - **Destroy Protection**: Consider enabling destroy protection in HCP Terraform to prevent accidental deletion
 
 ## HCP Terraform Setup Guide
@@ -180,16 +185,26 @@ terraform destroy
 5. HCP Terraform will create a workspace pre-configured to use this module
 6. Set the required variables and apply
 
-### Setting GitHub Token
+### Setting Required Tokens
 
-For security, always use **sensitive variables**:
+For security, always use **sensitive variables** and **environment variables**:
 
+**HCP Terraform API Token (Variable):**
 1. In the workspace, go to **Variables**
 2. Click **Add variable**
-3. Name: `gh_token`
-4. Value: Your GitHub PAT
+3. Name: `tfc_token`
+4. Value: Your HCP Terraform API token
 5. **Check "Sensitive"** to prevent display in logs
 6. Save
+
+**GitHub Token (Environment Variable):**
+1. In the workspace, go to **Variables**
+2. Click **Add variable**
+3. Select **Environment variable**
+4. Name: `GITHUB_TOKEN`
+5. Value: Your GitHub PAT
+6. **Check "Sensitive"** to prevent display in logs
+7. Save
 
 ## Support
 
