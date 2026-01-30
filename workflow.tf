@@ -8,7 +8,7 @@ resource "null_resource" "trigger_workflow_dev" {
     command = <<-EOT
       curl -s -X POST \
         -H "Accept: application/vnd.github.v3+json" \
-        -H "Authorization: token ${var.gh_token}" \
+        -H "Authorization: token $GH_TOKEN" \
         "https://api.github.com/repos/${var.gh_owner}/${github_repository.development.name}/actions/workflows/update-readme.yml/dispatches" \
         -d '{"ref":"main"}'
     EOT
@@ -22,7 +22,7 @@ resource "null_resource" "trigger_workflow_prod" {
     command = <<-EOT
       curl -s -X POST \
         -H "Accept: application/vnd.github.v3+json" \
-        -H "Authorization: token ${var.gh_token}" \
+        -H "Authorization: token $GH_TOKEN" \
         "https://api.github.com/repos/${var.gh_owner}/${github_repository.production.name}/actions/workflows/update-readme.yml/dispatches" \
         -d '{"ref":"main"}'
     EOT
