@@ -1,7 +1,7 @@
 resource "github_repository" "development" {
   name        = "${var.service_name}-dev"
   description = "Development repository for ${var.service_name}"
-  visibility  = "public"
+  visibility  = var.visibility
   template {
     owner                = var.gh_owner
     repository           = var.gh_template_repository
@@ -12,7 +12,7 @@ resource "github_repository" "development" {
 resource "github_repository" "production" {
   name        = "${var.service_name}-prod"
   description = "Production repository for ${var.service_name}"
-  visibility  = "public"
+  visibility  = var.visibility
   template {
     owner                = var.gh_owner
     repository           = var.gh_template_repository

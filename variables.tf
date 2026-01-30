@@ -20,3 +20,7 @@ variable "tfc_token" {
   sensitive   = true
 }
 
+variable "visibility" {
+  description = "Visibility of the GitHub repository (e.g., public, private)"
+  type        = string
+}
