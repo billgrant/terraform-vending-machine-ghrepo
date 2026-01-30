@@ -19,3 +19,9 @@ variable "tfc_token" {
   type        = string
   sensitive   = true
 }
+
+variable "gh_token" {
+  description = "GitHub token for triggering workflow dispatch (requires workflow scope)"
+  type        = string
+  sensitive   = true
+}
